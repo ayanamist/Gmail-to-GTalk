@@ -1,0 +1,4 @@
+cron:
+- description: cron update
+  url: /cron
+  schedule: every 1 minutes

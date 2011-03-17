@@ -1,0 +1,33 @@
+application: gmail-to-gtalk
+version: 1
+runtime: python
+api_version: 1
+
+inbound_services:
+- xmpp_message
+- xmpp_presence
+
+handlers:
+- url: /favicon.ico
+  static_files: favicon.ico
+  upload: favicon.ico
+  expiration: 7d
+  mime_type: image/vnd.microsoft.icon
+
+- url: /(.*\.(html|txt))
+  static_files: \1
+  upload: .*\.(html|txt)
+
+- url: /cron
+  script: cron.py
+  login: admin
+
+- url: /_ah/xmpp/message/chat/
+  script: xmpp.py
+  login: admin
+
+- url: /_ah/xmpp/presence/available/
+  script: xmpp.py
+
+- url: /_ah/xmpp/presence/unavailable/
+  script: xmpp.py
