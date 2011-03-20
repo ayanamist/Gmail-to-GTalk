@@ -1,8 +1,10 @@
 #!/usr/bin/python
 import config
 import oauth
+import logging
 
 from xml.dom.minidom import parseString
+from xml.parsers.expat import ExpatError
 from datetime import datetime, tzinfo, timedelta
 from google.appengine.api import urlfetch
 
@@ -36,7 +38,12 @@ def parse(text):
     return ''
 
   emails = []
-  dom = parseString(text)
+  text = text.strip()
+  try:
+    dom = parseString(text)
+  except ExpatError:
+    logging.error(text)
+    return []
   entries = dom.getElementsByTagName('entry')
   for entry in entries:
     email = dict()
