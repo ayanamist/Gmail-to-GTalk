@@ -144,7 +144,8 @@ class chat_handler(webapp.RequestHandler):
 class available_handler(webapp.RequestHandler):
   def post(self):
     jid = self.request.get('from').split('/')[0]
-    if User.get_by_key_name(jid):
+    u = User.get_by_key_name(jid)
+    if u and u.enabled:
       try:
         Session(key_name=jid).put()
       except db.BadKeyError:
