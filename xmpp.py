@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import config
 import oauth
-import mail
 
+from mail import parse
 from google.appengine.ext import webapp, db
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import xmpp, urlfetch
@@ -125,7 +125,13 @@ class chat_handler(webapp.RequestHandler):
     u = User.get_by_key_name(self._jid)
     if not u:
       return 'Please bind your account first.'
-    emails_map = mail.get_mails(u.access_key, u.access_secret)
+    token = oauth.OAuthToken(u.access_key, u.access_secret)
+    consumer = oauth.OAuthConsumer(config.OAUTH_CONSUMER_KEY, config.OAUTH_CONSUMER_SECRET)
+    oauth_request = oauth.OAuthRequest.from_consumer_and_token(consumer, token=token, http_url=config.RESOURCE_URL)
+    signature_method_hmac_sha1 = oauth.OAuthSignatureMethod_HMAC_SHA1()
+    oauth_request.sign_request(signature_method_hmac_sha1, consumer, token)
+    result = urlfetch.fetch(oauth_request.http_url, headers=oauth_request.to_header())
+    emails_map = parse(result.content)
     emails = list()
     for email in emails_map:
       str = 'From: %(author)s\nTitle: %(title)s\nSummary: %(summary)s\nTime: %(time)s\n%(url)s' % email
@@ -168,11 +174,19 @@ class unavailable_handler(webapp.RequestHandler):
       else:
         s.delete()
 
+class presence_handler(webapp.RequestHandler):
+  def post(self):
+    jid = self.request.get('from').split('/')[0]
+    if not db.WRITE_CAPABILITY:
+      xmpp.send_presence(jid, status='Google App Engine is under maintenance.', presence_type=xmpp.PRESENCE_SHOW_AWAY)
+    else:
+      xmpp.send_presence(jid)
 
 def main():
   application = webapp.WSGIApplication([('/_ah/xmpp/message/chat/', chat_handler),
                                         ('/_ah/xmpp/presence/available/', available_handler),
-                                        ('/_ah/xmpp/presence/unavailable/', unavailable_handler)])
+                                        ('/_ah/xmpp/presence/unavailable/', unavailable_handler),
+                                        ('/_ah/xmpp/presence/probe/', presence_handler)])
   run_wsgi_app(application)
 
 if __name__ == "__main__":

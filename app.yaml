@@ -31,3 +31,6 @@ handlers:
 
 - url: /_ah/xmpp/presence/unavailable/
   script: xmpp.py
+
+- url: /_ah/xmpp/presence/probe/
+  script: xmpp.py
