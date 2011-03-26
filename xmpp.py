@@ -24,9 +24,13 @@ class chat_handler(webapp.RequestHandler):
     except AttributeError, e:
       message.reply(e.message)
     else:
-      result = func(*args[1:])
-      if result:
-        message.reply(result)
+      try:
+        result = func(*args[1:])
+      except BaseException, e:
+        message.reply(e.message)
+      else:
+        if result:
+          message.reply(result)
 
   def oauth(self, mobile=None):
     consumer = oauth.OAuthConsumer(config.OAUTH_CONSUMER_KEY, config.OAUTH_CONSUMER_SECRET)
