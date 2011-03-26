@@ -178,19 +178,10 @@ class unavailable_handler(webapp.RequestHandler):
       else:
         s.delete()
 
-class presence_handler(webapp.RequestHandler):
-  def post(self):
-    jid = self.request.get('from').split('/')[0]
-    if not db.WRITE_CAPABILITY:
-      xmpp.send_presence(jid, status='Google App Engine is under maintenance.', presence_type=xmpp.PRESENCE_SHOW_AWAY)
-    else:
-      xmpp.send_presence(jid)
-
 def main():
   application = webapp.WSGIApplication([('/_ah/xmpp/message/chat/', chat_handler),
                                         ('/_ah/xmpp/presence/available/', available_handler),
-                                        ('/_ah/xmpp/presence/unavailable/', unavailable_handler),
-                                        ('/_ah/xmpp/presence/probe/', presence_handler)])
+                                        ('/_ah/xmpp/presence/unavailable/', unavailable_handler)])
   run_wsgi_app(application)
 
 if __name__ == "__main__":
