@@ -25,7 +25,13 @@ class cron_handler(webapp.RequestHandler):
             emails.insert(0, str)
             Mail(key_name=email['id']).put()
         if emails:
-          xmpp.send_message(jid, '\n\n'.join(emails))
+          while True:
+            try:
+              xmpp.send_message(jid, '\n\n'.join(emails))
+            except xmpp.Error:
+              pass
+            else:
+              break
 
     def create_callback(rpc):
       return lambda: handle_result(rpc)
