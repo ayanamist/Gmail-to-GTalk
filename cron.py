@@ -5,6 +5,7 @@ import oauth
 from google.appengine.ext import webapp, db
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import xmpp, urlfetch
+from google.appengine.api.capabilities import CapabilitySet
 from db import Session, Mail, User
 from mail import parse
 
@@ -21,11 +22,11 @@ class cron_handler(webapp.RequestHandler):
         emails = list()
         for email in emails_map:
           if not Mail.get_by_key_name(email['id']):
-            str = 'From: %(author)s\nTitle: %(title)s\nSummary: %(summary)s\nTime: %(time)s\n%(url)s' % email
-            emails.insert(0, str)
-            Mail(key_name=email['id']).put()
+            if Mail(key_name=email['id']).put():
+              str = 'From: %(author)s\nTitle: %(title)s\nSummary: %(summary)s\nTime: %(time)s\n%(url)s' % email
+              emails.insert(0, str)
         if emails:
-          while True:
+          while CapabilitySet('xmpp').is_enabled():
             try:
               xmpp.send_message(jid, '\n\n'.join(emails))
             except xmpp.Error:
